@@ -21,11 +21,30 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
-// Middleware
+/* =========================
+   ✅ FIXED CORS CONFIG
+========================= */
+const allowedOrigins = [
+  'https://neural-hire-swart.vercel.app',
+  'https://neural-hire-smart.vercel.app',
+  'http://localhost:5173'
+];
+
 app.use(cors({
-  origin: process.env.CLIENT_URL, // must be set in Render
+  origin: function (origin, callback) {
+    // allow requests with no origin (like Postman, mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('❌ Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
+
+/* ========================= */
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -47,7 +66,7 @@ app.use('/api/user', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.stack);
+  console.error('❌ Error:', err.message);
   res.status(err.status || 500).json({
     message: err.message || 'Internal server error',
   });
